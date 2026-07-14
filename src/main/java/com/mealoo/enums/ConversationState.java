@@ -1,0 +1,13 @@
+package com.mealoo.enums;
+
+public enum ConversationState {
+    SELECT_RESTAURANT,
+    SELECT_CATEGORY,
+    SELECT_ITEMS,
+    REVIEW_CART,
+    COLLECT_ADDRESS,
+    CONFIRM_ORDER,
+    PAYMENT_SELECTION,
+    AWAITING_UPI_PAYMENT,
+    ORDER_PLACED
+}
