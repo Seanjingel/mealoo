@@ -11,6 +11,14 @@ public class SessionManager {
         return sessions.computeIfAbsent(phoneNumber, ConversationSession::new);
     }
 
+    public ConversationSession get(String phoneNumber) {
+        return sessions.get(phoneNumber);
+    }
+
+    public java.util.Set<String> activePhones() {
+        return sessions.keySet();
+    }
+
     public void remove(String phoneNumber) {
         sessions.remove(phoneNumber);
     }

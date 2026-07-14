@@ -1,0 +1,453 @@
+{
+  "info": {
+    "name": "Mealoo WhatsApp Bot",
+    "description": "API collection for testing the Mealoo WhatsApp food ordering bot locally and in production.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",  "value": "http://localhost:8080", "type": "string" },
+    { "key": "phone",    "value": "919876543210",           "type": "string",
+      "description": "Test phone number (country code + number, no +)" },
+    { "key": "verifyToken", "value": "mealoo_verify_token_2024", "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Webhook",
+      "item": [
+        {
+          "name": "Verify Webhook (Meta GET handshake)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/whatsapp?hub.mode=subscribe&hub.challenge=CHALLENGE_ACCEPTED&hub.verify_token={{verifyToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhook", "whatsapp"],
+              "query": [
+                { "key": "hub.mode",         "value": "subscribe" },
+                { "key": "hub.challenge",    "value": "CHALLENGE_ACCEPTED" },
+                { "key": "hub.verify_token", "value": "{{verifyToken}}" }
+              ]
+            },
+            "description": "Simulates Meta's webhook verification call. Should return 200 with body: CHALLENGE_ACCEPTED"
+          }
+        },
+        {
+          "name": "Incoming Text Message (Hi — start order)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test001\",\n                \"type\": \"text\",\n                \"text\": { \"body\": \"Hi\" }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates a customer sending 'Hi'. Bot should reply with restaurant list (check logs — actual reply goes to Meta API)."
+          }
+        },
+        {
+          "name": "Interactive — List Reply (select restaurant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test002\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"list_reply\",\n                  \"list_reply\": {\n                    \"id\": \"rest_0\",\n                    \"title\": \"Patratu Lake Resort\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping 'Patratu Lake Resort' (rest_0) in the restaurant list. Change rest_0 → rest_1/rest_2 etc. for other restaurants."
+          }
+        },
+        {
+          "name": "Interactive — List Reply (select category)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test003\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"list_reply\",\n                  \"list_reply\": {\n                    \"id\": \"cat_0\",\n                    \"title\": \"Non-Veg\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping 'Non-Veg' (cat_0). IDs: cat_0=Non-Veg, cat_1=Veg, cat_2=Snacks, cat_3=Beverages."
+          }
+        },
+        {
+          "name": "Interactive — List Reply (select menu item)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test004\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"list_reply\",\n                  \"list_reply\": {\n                    \"id\": \"item_0\",\n                    \"title\": \"Chicken Biryani\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping the first menu item (item_0). Use item_more to load next page (9 items per page)."
+          }
+        },
+        {
+          "name": "Interactive — List Reply (show more items)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test005\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"list_reply\",\n                  \"list_reply\": {\n                    \"id\": \"item_more\",\n                    \"title\": \"Show More\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping 'Show More →'. Advances itemPage and sends the next 9 items."
+          }
+        },
+        {
+          "name": "Interactive — Button Reply (cart checkout)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test006\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"button_reply\",\n                  \"button_reply\": {\n                    \"id\": \"cart_checkout\",\n                    \"title\": \"Checkout\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping the Checkout button in REVIEW_CART state."
+          }
+        },
+        {
+          "name": "Interactive — Button Reply (confirm order)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test007\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"button_reply\",\n                  \"button_reply\": {\n                    \"id\": \"confirm_yes\",\n                    \"title\": \"Confirm Order\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates tapping 'Confirm Order' in CONFIRM_ORDER state. Use confirm_no to cancel."
+          }
+        },
+        {
+          "name": "Interactive — Button Reply (pay UPI)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test008\",\n                \"type\": \"interactive\",\n                \"interactive\": {\n                  \"type\": \"button_reply\",\n                  \"button_reply\": {\n                    \"id\": \"pay_upi\",\n                    \"title\": \"UPI\"\n                  }\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates selecting UPI payment. Session moves to AWAITING_UPI_PAYMENT. Use pay_cod for Cash on Delivery."
+          }
+        },
+        {
+          "name": "Incoming Text Message (delivery address)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WABA_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": { \"phone_number_id\": \"PHONE_ID\" },\n            \"messages\": [\n              {\n                \"from\": \"{{phone}}\",\n                \"id\": \"wamid.test009\",\n                \"type\": \"text\",\n                \"text\": { \"body\": \"123 Main Street, Patratu, Jharkhand 825329\" }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/webhook/whatsapp", "host": ["{{baseUrl}}"], "path": ["webhook", "whatsapp"] },
+            "description": "Simulates the customer typing their delivery address in COLLECT_ADDRESS state. Must be 10+ characters."
+          }
+        },
+        {
+          "name": "Confirm UPI Payment (backend webhook)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/payment/confirm?phone={{phone}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhook", "payment", "confirm"],
+              "query": [{ "key": "phone", "value": "{{phone}}" }]
+            },
+            "description": "Called by payment gateway after UPI payment is received. Moves session to ORDER_PLACED."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Test / Debug API",
+      "description": "Shortcut endpoints in TestController for rapid local testing without constructing full Meta webhook payloads.",
+      "item": [
+        {
+          "name": "Send Message (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=Hi",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "Hi" }
+              ]
+            },
+            "description": "Directly triggers processMessage(phone, text). Change text to any button ID or plain text. Quick alternative to full webhook payloads."
+          }
+        },
+        {
+          "name": "Select Restaurant (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=rest_0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "rest_0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Select Category (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=cat_0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "cat_0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Select Menu Item (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=item_0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "item_0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cart Checkout (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=cart_checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "cart_checkout" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enter Delivery Address (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=123 Main Street, Patratu, Jharkhand",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "123 Main Street, Patratu, Jharkhand" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm Order (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=confirm_yes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "confirm_yes" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pay COD (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=pay_cod",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "pay_cod" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pay UPI (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/message?phone={{phone}}&text=pay_upi",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "message"],
+              "query": [
+                { "key": "phone", "value": "{{phone}}" },
+                { "key": "text",  "value": "pay_upi" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm UPI Payment (shortcut)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/payment/confirm?phone={{phone}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "payment", "confirm"],
+              "query": [{ "key": "phone", "value": "{{phone}}" }]
+            },
+            "description": "Triggers confirmUpiPayment — same as the real payment webhook but via test path."
+          }
+        },
+        {
+          "name": "Inspect Session State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/session/{{phone}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "session", "{{phone}}"]
+            },
+            "description": "Returns current session: state, cart size, selected restaurant/category, delivery address, payment method."
+          }
+        },
+        {
+          "name": "List All Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "sessions"]
+            },
+            "description": "Returns count + phone numbers of all in-memory sessions."
+          }
+        },
+        {
+          "name": "Reset Session",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/session/{{phone}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "session", "{{phone}}"]
+            },
+            "description": "Clears the session for this phone number — customer starts fresh from SELECT_RESTAURANT."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Actuator",
+      "description": "Spring Boot Actuator monitoring endpoints.",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] },
+            "description": "Returns UP/DOWN status with component details."
+          }
+        },
+        {
+          "name": "Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/info", "host": ["{{baseUrl}}"], "path": ["actuator", "info"] },
+            "description": "Returns app name, version, description from application.properties info.* keys."
+          }
+        },
+        {
+          "name": "Metrics — JVM Memory Used",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/metrics/jvm.memory.used", "host": ["{{baseUrl}}"], "path": ["actuator", "metrics", "jvm.memory.used"] }
+          }
+        },
+        {
+          "name": "Metrics — HTTP Request Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/metrics/http.server.requests", "host": ["{{baseUrl}}"], "path": ["actuator", "metrics", "http.server.requests"] }
+          }
+        },
+        {
+          "name": "Metrics — List All",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/metrics", "host": ["{{baseUrl}}"], "path": ["actuator", "metrics"] },
+            "description": "Lists all available metric names."
+          }
+        },
+        {
+          "name": "Loggers — View com.mealoo level",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/loggers/com.mealoo", "host": ["{{baseUrl}}"], "path": ["actuator", "loggers", "com.mealoo"] },
+            "description": "Returns effective log level for the com.mealoo package."
+          }
+        },
+        {
+          "name": "Loggers — Set com.mealoo to TRACE",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"configuredLevel\": \"TRACE\" }" },
+            "url": { "raw": "{{baseUrl}}/actuator/loggers/com.mealoo", "host": ["{{baseUrl}}"], "path": ["actuator", "loggers", "com.mealoo"] },
+            "description": "Dynamically change log level to TRACE without restarting. Change to DEBUG/INFO/WARN to dial back."
+          }
+        },
+        {
+          "name": "Environment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/env", "host": ["{{baseUrl}}"], "path": ["actuator", "env"] },
+            "description": "Returns all resolved properties. Sensitive values like access tokens are masked."
+          }
+        }
+      ]
+    }
+  ]
+}
